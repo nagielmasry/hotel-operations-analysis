@@ -1,0 +1,66 @@
+# Dataset Schema — Hotel Operations
+
+## Context
+
+LuxurStay Hotels is a major international hotel chain offering hotels for both
+business and leisure travellers in major cities across the world. Management has
+been receiving complaints about slow room service response times, causing customer
+satisfaction to drop below the expected 4.5 rating.
+
+The data covers only requests where customers provided a feedback rating.
+
+---
+
+## Table Relationships
+
+```
+service (id) ←── request (service_id)
+branch  (id) ←── request (branch_id)
+```
+
+---
+
+## Table: `branch`
+
+| Column | Data Type | Nulls / Issues | Description |
+|---|---|---|---|
+| `id` | integer | No nulls | Nominal. Unique hotel branch identifier. |
+| `location` | text | No nulls in raw | Nominal. One of: EMEA, NA, LATAM, APAC. |
+| `total_rooms` | integer | May be NULL or out of range | Discrete. Total rooms in the hotel. Valid range: 1–400. Default: 100. |
+| `staff_count` | integer | May be NULL | Discrete. Number of service department staff. NULL → total_rooms × 1.5. |
+| `opening_date` | text | `'-'` placeholder present | Discrete. Year hotel opened. Valid range: 2000–2023. Stored as text. |
+| `target_guests` | text | `'B.'` and `'Busniess'` typo present | Nominal. Primary guest type: Leisure or Business. |
+
+---
+
+## Table: `request`
+
+| Column | Data Type | Description |
+|---|---|---|
+| `id` | integer | Unique request identifier. |
+| `service_id` | integer | Foreign key linking to `service.id`. |
+| `branch_id` | integer | Foreign key linking to `branch.id`. |
+| `time_taken` | integer | Minutes taken to fulfil the customer request. |
+| `request_time` | text | Time period of the request: Day-Peak, Day-Off-Peak, Night. |
+| `rating` | integer | Customer satisfaction rating on a 1–5 scale. |
+
+---
+
+## Table: `service`
+
+| Column | Data Type | Description |
+|---|---|---|
+| `id` | integer | Unique service identifier. |
+| `description` | text | Service type: Meal, Laundry, Cleaning, Other. |
+
+---
+
+## Cleaning Specification (branch table)
+
+| Column | Rule |
+|---|---|
+| `location` | Apply `UPPER(TRIM())`. Invalid values → `'Unknown'`. |
+| `total_rooms` | NULL or outside 1–400 → `100`. |
+| `staff_count` | NULL → `ROUND(total_rooms * 1.5)` cast to integer. |
+| `opening_date` | `'-'` or NULL → `2023`. Must be valid 4-digit year between 2000–2023. |
+| `target_guests` | Only `'Leisure'` and `'Business'` are valid. All others → `'Leisure'`. |
